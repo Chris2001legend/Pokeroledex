@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>PokéroleDex 3.0 | Android Edition</title>
+  
+  <!-- Android & Mobile Web App Meta Tags -->
+  <meta name="theme-color" content="#0f172a">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PokéroleDex">
+  <link rel="manifest" href="Back-End/static/manifest.json">
+  <link rel="icon" type="image/png" href="Back-End/static/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="Back-End/static/icons/icon-192.png">
+
+  <link rel="stylesheet" href="Back-End/static/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body class="android-app">
+
+  <!-- Top App Navigation Bar -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="brand" onclick="switchTab('pokedex')">
+        <div class="pokeball-icon">
+          <div class="ball-top"></div>
+          <div class="ball-center"></div>
+          <div class="ball-bottom"></div>
+        </div>
+        <div class="brand-text">
+          <span class="brand-title">PokéroleDex</span>
+          <span class="brand-badge">Android Core 3.0</span>
+        </div>
+      </div>
+
+      <!-- Desktop Tabs (Hidden on small mobile screens in favor of Bottom Nav) -->
+      <nav class="nav-tabs desktop-nav-tabs">
+        <button class="nav-btn active" data-tab="pokedex" onclick="switchTab('pokedex')">
+          <span class="icon">📕</span>
+          <span>Pokédex</span>
+        </button>
+        <button class="nav-btn" data-tab="moves" onclick="switchTab('moves')">
+          <span class="icon">⚔️</span>
+          <span>Mosse</span>
+        </button>
+        <button class="nav-btn" data-tab="items" onclick="switchTab('items')">
+          <span class="icon">🎒</span>
+          <span>Strumenti</span>
+        </button>
+        <button class="nav-btn" data-tab="abilities" onclick="switchTab('abilities')">
+          <span class="icon">🌟</span>
+          <span>Abilità</span>
+        </button>
+        <button class="nav-btn" data-tab="natures" onclick="switchTab('natures')">
+          <span class="icon">🧠</span>
+          <span>Nature</span>
+        </button>
+        <button class="nav-btn" data-tab="creator" onclick="switchTab('creator')">
+          <span class="icon">👥</span>
+          <span>Squadra & Allenatori</span>
+        </button>
+        <button class="nav-btn" data-tab="dice" onclick="switchTab('dice')">
+          <span class="icon">🎲</span>
+          <span>Dadi TRPG</span>
+        </button>
+      </nav>
+
+      <!-- Top Action Buttons -->
+      <div class="nav-actions">
+        <!-- Install PWA Button (Hidden by default, shown when installable) -->
+        <button type="button" class="action-pill-btn pwa-install-btn" id="pwaInstallBtn" onclick="installPwaApp()" style="display: none;">
+          <span>📲 Installa App</span>
+        </button>
+
+        <!-- QR Wi-Fi Connect Button -->
+        <button type="button" class="action-pill-btn" onclick="openNetworkModal()" title="Collega il telefono via Wi-Fi">
+          <span>📶 Wi-Fi Telefono</span>
+        </button>
+
+        <div class="sprite-selector" title="Scegli stile sprite">
+          <label for="spriteStyle">Sprite:</label>
+          <select id="spriteStyle" onchange="changeSpriteStyle(this.value)">
+            <option value="BookSprites" selected>Book Art</option>
+            <option value="HomeSprites">Home 3D</option>
+            <option value="BoxSprites">Box Pixel</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Global Stats Ribbon -->
+  <div class="stats-ribbon">
+    <div class="ribbon-container">
+      <div class="ribbon-item"><strong id="stat-pokemon">1200</strong> Pokémon</div>
+      <div class="ribbon-item"><strong id="stat-moves">892</strong> Mosse</div>
+      <div class="ribbon-item"><strong id="stat-abilities">305</strong> Abilità</div>
+      <div class="ribbon-item"><strong id="stat-items">236</strong> Strumenti</div>
+      <div class="ribbon-item"><strong id="stat-natures">25</strong> Nature</div>
+      <div class="ribbon-item"><strong id="stat-trainers">0</strong> Personaggi</div>
+      <div class="ribbon-item"><strong id="stat-custom-pokemon">0</strong> Pokémon Creati</div>
+    </div>
+  </div>
+
+  <!-- Main Mobile Content Area -->
+  <main class="content-container">
+
+    <!-- ==================== POKEDEX TAB ==================== -->
+    <section id="tab-pokedex" class="tab-pane active">
+      <div class="filter-card">
+        <div class="filter-row main-filters">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="pokeSearch" placeholder="Cerca Pokémon per Nome, N. Dex (#0001) o Categoria..." oninput="debouncePokeFilter()">
+            <button class="clear-btn" onclick="clearPokeSearch()">✕</button>
+          </div>
+
+          <div class="select-group">
+            <select id="pokeRankFilter" onchange="filterPokemon()">
+              <option value="All">Tutti i Ranghi</option>
+              <option value="Principiante">Principiante (Starter)</option>
+              <option value="Novizio">Novizio (Rookie)</option>
+              <option value="Standard">Standard</option>
+              <option value="Avanzato">Avanzato (Advanced)</option>
+              <option value="Esperto">Esperto (Expert)</option>
+              <option value="Asso">Asso (Ace)</option>
+              <option value="Maestro">Maestro (Master)</option>
+              <option value="Campione">Campione (Champion)</option>
+            </select>
+
+            <select id="pokeSort" onchange="filterPokemon()">
+              <option value="number">Ordina: N. Dex (Crescente)</option>
+              <option value="number_desc">Ordina: N. Dex (Decrescente)</option>
+              <option value="name">Ordina: Nome (A-Z)</option>
+              <option value="name_desc">Ordina: Nome (Z-A)</option>
+              <option value="stats">Ordina: Statistiche Totali</option>
+              <option value="hp">Ordina: Punti Vita (HP)</option>
+            </select>
+          </div>
+
+          <div class="toggle-group">
+            <label class="toggle-chip">
+              <input type="checkbox" id="pokeStarterToggle" onchange="filterPokemon()">
+              <span>⭐ Starter</span>
+            </label>
+            <label class="toggle-chip">
+              <input type="checkbox" id="pokeLegendaryToggle" onchange="filterPokemon()">
+              <span>👑 Leggendario</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Type Filter Chips in Italian -->
+        <div class="type-filter-chips" id="typeFilterContainer">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Result Count Bar -->
+      <div class="results-header">
+        <span id="pokedexCountText">Caricamento Pokémon...</span>
+      </div>
+
+      <!-- Pokemon Grid -->
+      <div class="pokemon-grid" id="pokemonGrid">
+        <div class="loading-spinner">Caricamento Pokémon dal Database...</div>
+      </div>
+      <div id="pokeScrollSentinel" style="height: 30px; text-align: center; color: var(--text-dim); margin-top: 1rem;"></div>
+    </section>
+
+    <!-- ==================== MOVES TAB ==================== -->
+    <section id="tab-moves" class="tab-pane">
+      <div class="filter-card">
+        <div class="filter-row main-filters">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="movesSearch" placeholder="Cerca mossa per nome, effetto o descrizione..." oninput="filterMoves()">
+            <button class="clear-btn" onclick="clearMovesSearch()">✕</button>
+          </div>
+
+          <div class="select-group">
+            <select id="moveTypeFilter" onchange="filterMoves()">
+              <option value="All">Tutti i Tipi</option>
+            </select>
+
+            <select id="moveCategoryFilter" onchange="filterMoves()">
+              <option value="All">Tutte le Categorie</option>
+              <option value="Fisico">Fisico</option>
+              <option value="Speciale">Speciale</option>
+              <option value="Supporto">Supporto</option>
+            </select>
+
+            <select id="moveTargetFilter" onchange="filterMoves()">
+              <option value="All">Tutti i Bersagli</option>
+              <option value="Nemico">Nemico (Foe)</option>
+              <option value="Utilizzatore">Utilizzatore (Self)</option>
+              <option value="Alleato">Alleato (Ally)</option>
+              <option value="Tutti gli Alleati">Tutti gli Alleati</option>
+              <option value="Area">Area</option>
+              <option value="Campo di Battaglia">Campo di Battaglia</option>
+              <option value="Tutti i Nemici">Tutti i Nemici</option>
+              <option value="Nemico Casuale">Nemico Casuale</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="results-header moves-results-header">
+        <span id="movesCountText">Caricamento mosse...</span>
+        <div class="view-toggle">
+          <button type="button" class="view-btn active" id="viewBtnCards" onclick="setMovesView('cards')">🎴 Schede</button>
+          <button type="button" class="view-btn" id="viewBtnTable" onclick="setMovesView('table')">📋 Tabella</button>
+        </div>
+      </div>
+
+      <!-- Cards Grid View -->
+      <div class="moves-container" id="movesGrid"></div>
+
+      <!-- Compact Table View -->
+      <div class="table-responsive" id="movesTableWrap" style="display: none;">
+        <table class="learnset-table moves-table">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Tipo</th>
+              <th>Cat.</th>
+              <th>Pot.</th>
+              <th>Riserva Danno</th>
+              <th>Precisione</th>
+              <th>Bersaglio</th>
+              <th>Effetto</th>
+            </tr>
+          </thead>
+          <tbody id="movesTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ==================== ITEMS TAB ==================== -->
+    <section id="tab-items" class="tab-pane">
+      <div class="filter-card">
+        <div class="filter-row main-filters">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="itemsSearch" placeholder="Cerca strumento o effetto..." oninput="filterItems()">
+            <button class="clear-btn" onclick="clearItemsSearch()">✕</button>
+          </div>
+
+          <div class="select-group">
+            <select id="itemPocketFilter" onchange="filterItems()">
+              <option value="All">Tutte le Tasche</option>
+              <option value="Strumenti Tenuti">Strumenti Tenuti (Held Items)</option>
+              <option value="Strumenti Allenatore">Strumenti Allenatore</option>
+              <option value="Strumenti Evolutivi">Strumenti Evolutivi</option>
+              <option value="Medicine">Medicine & Cure</option>
+              <option value="Poké Ball">Poké Ball</option>
+              <option value="Macchine Tecniche (MT)">Macchine Tecniche (MT)</option>
+            </select>
+
+            <select id="itemPmdFilter" onchange="filterItems()">
+              <option value="all">Tutti i Prezzi</option>
+              <option value="standard">Standard Allenatore</option>
+              <option value="pmd">Pokémon Mystery Dungeon</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="results-header">
+        <span id="itemsCountText">Caricamento strumenti...</span>
+      </div>
+
+      <div class="items-grid" id="itemsGrid"></div>
+    </section>
+
+    <!-- ==================== ABILITIES TAB ==================== -->
+    <section id="tab-abilities" class="tab-pane">
+      <div class="filter-card">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="abilitySearch" placeholder="Cerca abilità o descrizione effetto..." oninput="filterAbilities()">
+          <button class="clear-btn" onclick="clearAbilitySearch()">✕</button>
+        </div>
+      </div>
+
+      <div class="results-header">
+        <span id="abilitiesCountText">Caricamento abilità...</span>
+      </div>
+
+      <div class="abilities-grid" id="abilitiesGrid"></div>
+    </section>
+
+    <!-- ==================== NATURES TAB ==================== -->
+    <section id="tab-natures" class="tab-pane">
+      <div class="results-header">
+        <span>25 Nature Ufficiali di Pokérole TRPG (con punteggio di Fiducia & Guida all'Interpretazione)</span>
+      </div>
+      <div class="natures-grid" id="naturesGrid"></div>
+    </section>
+
+    <!-- ==================== CREATOR TAB (PERSONAGGI & TEAM) ==================== -->
+    <section id="tab-creator" class="tab-pane">
+      <div class="creator-top-bar">
+        <div class="creator-tabs-toggle">
+          <button type="button" class="creator-subnav-btn active" id="subnavTrainers" onclick="switchCreatorSubtab('trainers')">
+            👤 Allenatori (Personaggi)
+          </button>
+          <button type="button" class="creator-subnav-btn" id="subnavPokemon" onclick="switchCreatorSubtab('pokemon')">
+            🐾 I Miei Pokémon
+          </button>
+        </div>
+
+        <div class="creator-actions">
+          <button type="button" class="primary-btn" id="btnNewTrainer" onclick="openTrainerModal()">
+            <span>+ Crea Nuovo Allenatore</span>
+          </button>
+          <button type="button" class="primary-btn" id="btnNewPokemon" onclick="openCustomPokeModal()" style="display: none;">
+            <span>+ Crea Nuovo Pokémon</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- TRAINERS VIEW -->
+      <div id="creatorTrainersView">
+        <div class="results-header">
+          <span id="trainersCountText">Caricamento Personaggi...</span>
+        </div>
+        <div class="trainers-grid" id="trainersGrid">
+          <div class="loading-spinner">Caricamento Personaggi...</div>
+        </div>
+      </div>
+
+      <!-- CUSTOM POKEMON VIEW -->
+      <div id="creatorPokemonView" style="display: none;">
+        <div class="results-header">
+          <span id="customPokeCountText">Caricamento Pokémon del team...</span>
+        </div>
+        <div class="custom-pokemon-grid" id="customPokemonGrid">
+          <div class="loading-spinner">Caricamento Pokémon...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== DICE ROLLER TAB ==================== -->
+    <section id="tab-dice" class="tab-pane">
+      <div class="dice-roller-layout">
+        <div class="dice-panel">
+          <h2>Lanciatore Dadi Pokérole</h2>
+          <p class="subtitle">Nel sistema Pokérole ogni successo (4, 5, 6) contribuisce alla prova. I 6 generano colpi critici. Su smartphone tocca con vibrazione aptica attiva!</p>
+
+          <div class="dice-controls">
+            <div class="control-card">
+              <label>Riserva Dadi Principale (D6)</label>
+              <div class="counter">
+                <button type="button" onclick="adjustDice('mainDice', -1)">-</button>
+                <input type="number" id="mainDice" min="1" max="20" value="5">
+                <button type="button" onclick="adjustDice('mainDice', 1)">+</button>
+              </div>
+              <small>Attributo + Abilità (es. Forza 3 + Rissa 2 = 5 dadi)</small>
+            </div>
+
+            <div class="control-card">
+              <label>Dado Rischio / Chance Die</label>
+              <div class="counter">
+                <button type="button" onclick="adjustDice('chanceDice', -1)">-</button>
+                <input type="number" id="chanceDice" min="0" max="5" value="0">
+                <button type="button" onclick="adjustDice('chanceDice', 1)">+</button>
+              </div>
+              <small>Se esce 1 causa complicazione o fallimento critico</small>
+            </div>
+
+            <div class="control-card">
+              <label>Difficoltà Richiesta (Successi)</label>
+              <div class="counter">
+                <button type="button" onclick="adjustDice('difficulty', -1)">-</button>
+                <input type="number" id="difficulty" min="1" max="10" value="2">
+                <button type="button" onclick="adjustDice('difficulty', 1)">+</button>
+              </div>
+              <small>Successi minimi richiesti dal Narratore</small>
+            </div>
+          </div>
+
+          <button class="roll-btn" onclick="rollPokeDice()">
+            🎲 Lancia i Dadi!
+          </button>
+
+          <div class="dice-result-display" id="diceResultBox" style="display: none;"></div>
+        </div>
+
+        <div class="dice-history-panel">
+          <h3>Cronologia Lanci</h3>
+          <div class="history-list" id="diceHistoryList">
+            <div class="empty-state">Nessun lancio effettuato in questa sessione.</div>
+          </div>
+          <button class="secondary-btn" onclick="clearDiceHistory()">Svuota Cronologia</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==================== ANDROID BOTTOM NAVIGATION BAR ==================== -->
+  <nav class="android-bottom-nav">
+    <button class="b-nav-item active" data-tab="pokedex" onclick="switchTab('pokedex')">
+      <span class="b-nav-icon">📕</span>
+      <span class="b-nav-label">Dex</span>
+    </button>
+    <button class="b-nav-item" data-tab="moves" onclick="switchTab('moves')">
+      <span class="b-nav-icon">⚔️</span>
+      <span class="b-nav-label">Mosse</span>
+    </button>
+    <button class="b-nav-item" data-tab="items" onclick="switchTab('items')">
+      <span class="b-nav-icon">🎒</span>
+      <span class="b-nav-label">Oggetti</span>
+    </button>
+    <button class="b-nav-item" data-tab="abilities" onclick="switchTab('abilities')">
+      <span class="b-nav-icon">🌟</span>
+      <span class="b-nav-label">Abilità</span>
+    </button>
+    <button class="b-nav-item" data-tab="natures" onclick="switchTab('natures')">
+      <span class="b-nav-icon">🧠</span>
+      <span class="b-nav-label">Nature</span>
+    </button>
+    <button class="b-nav-item" data-tab="creator" onclick="switchTab('creator')">
+      <span class="b-nav-icon">👥</span>
+      <span class="b-nav-label">Team</span>
+    </button>
+    <button class="b-nav-item" data-tab="dice" onclick="switchTab('dice')">
+      <span class="b-nav-icon">🎲</span>
+      <span class="b-nav-label">Dadi</span>
+    </button>
+  </nav>
+
+  <!-- ==================== MODALS ==================== -->
+
+  <!-- WI-FI PHONE CONNECT MODAL -->
+  <div class="modal-overlay" id="networkModal" onclick="closeNetworkModal(event)">
+    <div class="modal-card network-modal-card" onclick="event.stopPropagation()">
+      <div class="mobile-sheet-handle"></div>
+      <button class="modal-close" onclick="closeNetworkModal()">✕</button>
+      <div class="modal-body" style="text-align: center; padding: 1.5rem 1rem;">
+        <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 0.5rem;">📲 Connetti il Telefono Android</h2>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.25rem;">
+          Inquadra questo QR Code con la fotocamera del tuo telefono per aprire subito l'applicazione sulla rete Wi-Fi locale:
+        </p>
+        
+        <div class="qr-container" id="qrContainer" style="display: flex; justify-content: center; margin: 1rem 0;">
+          <div id="qrCodeBox" style="background: white; padding: 12px; border-radius: 12px; display: inline-block;"></div>
+        </div>
+
+        <div class="network-link-box" style="background: var(--bg-card); padding: 0.75rem 1rem; border-radius: var(--radius-md); margin-bottom: 1rem;">
+          <span style="font-size: 0.75rem; color: var(--text-dim); display: block;">Indirizzo Wi-Fi Diretto:</span>
+          <a id="lanUrlLink" href="#" target="_blank" style="font-family: var(--font-mono); font-size: 1.1rem; color: var(--accent-red-hover); font-weight: 700; word-break: break-all;">
+            Caricamento...
+          </a>
+        </div>
+
+        <button type="button" class="primary-btn" onclick="copyLanUrl()" style="width: 100%; justify-content: center;">
+          📋 Copia Link per Telefono
+        </button>
+
+        <div style="margin-top: 1.25rem; font-size: 0.8rem; color: var(--text-muted); line-height: 1.5; text-align: left; background: rgba(255,255,255,0.03); padding: 0.85rem; border-radius: var(--radius-sm);">
+          <strong>💡 Come installarla come vera App su Android:</strong><br>
+          1. Apri l'indirizzo su Google Chrome dal tuo smartphone.<br>
+          2. Tocca i tre puntini in alto a destra <strong>⋮</strong>.<br>
+          3. Seleziona <strong>"Aggiungi a schermata Home"</strong> o <strong>"Installa app"</strong>.<br>
+          4. L'icona Pokérole comparirà nella tua home e si avvierà a schermo intero come una normale applicazione Android!
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- POKÉMON DETAIL MODAL -->
+  <div class="modal-overlay" id="pokeModal" onclick="closePokeModal(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+      <div class="mobile-sheet-handle"></div>
+      <button class="modal-close" onclick="closePokeModal()">✕</button>
+      <div class="modal-body" id="pokeModalContent"></div>
+    </div>
+  </div>
+
+  <!-- MOVE DETAIL MODAL -->
+  <div class="modal-overlay" id="moveModal" onclick="closeMoveModal(event)">
+    <div class="modal-card move-detail-card" onclick="event.stopPropagation()">
+      <div class="mobile-sheet-handle"></div>
+      <button class="modal-close" onclick="closeMoveModal()">✕</button>
+      <div class="modal-body" id="moveModalContent"></div>
+    </div>
+  </div>
+
+  <!-- ABILITY DETAIL MODAL -->
+  <div class="modal-overlay" id="abilityModal" onclick="closeAbilityModal(event)">
+    <div class="modal-card ability-detail-card" onclick="event.stopPropagation()">
+      <div class="mobile-sheet-handle"></div>
+      <button class="modal-close" onclick="closeAbilityModal()">✕</button>
+      <div class="modal-body" id="abilityModalContent"></div>
+    </div>
+  </div>
+
+  <!-- TRAINER CREATE / EDIT MODAL -->
+  <div class="modal-overlay" id="trainerModal" onclick="closeTrainerModal(event)">
+    <div class="modal-card creator-modal-card" onclick="event.stopPropagation()">
+      <div class="mobile-sheet-handle"></div>
+      <button class="modal-close" onclick="closeTrainerModal()">✕</button>
+      <div class="modal-body">
+        <h2 id="trainerModalTitle" style="margin-bottom: 0.2rem;">Crea Personaggio Allenatore</h2>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">
+          Scheda del Personaggio secondo le regole del manuale di <strong>Pokérole Core 3.0</strong>
+        </p>
+
+        <form id="trainerForm" onsubmit="saveTrainer(event)">
+          <input type="hidden" id="trId" value="">
+
+          <div class="form-grid">
+            <div class="form-field">
+              <label for="trName">Nome Personaggio *</label>
+              <input type="text" id="trName" required placeholder="Es. Ash, Red, Sabrina...">
+            </div>
+
+            <div class="form-field">
+              <label for="trConcept">Concetto / Archetipo</label>
+              <input type="text" id="trConcept" placeholder="Es. Allenatore principiante, Ranger, Ricercatore...">
+            </div>
+
+            <div class="form-field">
+              <label for="trAge">Età</label>
+              <input type="number" id="trAge" min="8" max="99" value="14">
+            </div>
+
+            <div class="form-field">
+              <label for="trNature">Natura</label>
+              <select id="trNature" onchange="updateTrainerDerivedStats()"></select>
+            </div>
+
+            <div class="form-field">
+              <label for="trRank">Rango</label>
+              <select id="trRank" onchange="updateTrainerDerivedStats()">
+                <option value="Principiante">Principiante (Starter)</option>
+                <option value="Novizio">Novizio (Rookie)</option>
+                <option value="Standard">Standard</option>
+                <option value="Avanzato">Avanzato (Advanced)</option>
+                <option value="Esperto">Esperto (Expert)</option>
+                <option value="Asso">Asso (Ace)</option>
+                <option value="Maestro">Maestro (Master)</option>
+                <option value="Campione">Campione (Champion)</option>
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label for="trMoney">Denaro Iniziale ($)</label>
+              <input type="number" id="trMoney" value="1500" step="50">
+            </div>
+          </div>
+
+          <!-- Derived Stats Summary Box -->
+          <div class="trainer-derived-box">
+            <div class="d-stat"><small>Punti Vita (HP)</small><strong id="trDerivedHp">6</strong></div>
+            <div class="d-stat"><small>Punti Volontà</small><strong id="trDerivedWill">8</strong></div>
+            <div class="d-stat"><small>Iniziativa</small><strong id="trDerivedInit">1</strong></div>
+            <div class="d-stat"><small>Difesa</small><strong id="trDerivedDef">1</strong></div>
+            <div class="d-stat"><small>Dif. Speciale</small><strong id="trDerivedSpDef">1</strong></div>
+          </div>
+
+          <!-- Core Attributes -->
+          <h3 class="creator-subheading">Attributi Principali (Partono da 1 - Manuale Pokérole)</h3>
+          <div class="attributes-stepper-grid">
+            <div class="stat-stepper-card">
+              <div class="stepper-header">
+                <strong>Forza (Strength)</strong>
+                <span class="stepper-val" id="val_trStrength">1</span>
+              </div>
+              <div class="stepper-controls">
+                <button type="button" onclick="stepStat('trStrength', -1, 1, 5)">-</button>
+                <div class="dot-track" id="dots_trStrength"></div>
+                <button type="button" onclick="stepStat('trStrength', 1, 1, 5)">+</button>
+              </div>
+              <input type="hidden" id="trStrength" value="1">
+            </div>
+
+            <div class="stat-stepper-card">
+              <div class="stepper-header">
+                <strong>Destrezza (Dexterity)</strong>
+                <span class="stepper-val" id="val_trDexterity">1</span>
+              </div>
+              <div class="stepper-controls">
+                <button type="button" onclick="stepStat('trDexterity', -1, 1, 5)">-</button>
+                <div class="dot-track" id="dots_trDexterity"></div>
+                <button type="button" onclick="stepStat('trDexterity', 1, 1, 5)">+</button>
+              </div>
+              <input type="hidden" id="trDexterity" value="1">
+            </div>
+
+            <div class="stat-stepper-card">
+              <div class="stepper-header">
+                <strong>Vitalità (Vitality)</strong>
+                <span class="stepper-val" id="val_trVitality">1</span>
+              </div>
+              <div class="stepper-controls">
+                <button type="button" onclick="stepStat('trVitality', -1, 1, 5)">-</button>
+                <div class="dot-track" id="dots_trVitality"></div>
+                <button type="button" onclick="stepStat('trVitality', 1, 1, 5)">+</button>
+              </div>
+              <input type="hidden" id="trVitality" value="1">
+            </div>
+
+            <div class="stat-stepper-card">
+              <div class="stepper-header">
+                <strong>Intuito (Insight)</strong>
+                <span class="stepper-val" id="val_trInsight">1</span>
+              </div>
+              <div class="stepper-controls">
+                <button type="button" onclick="stepStat('trInsight', -1, 1, 5)">-</button>
+                <div class="dot-track" id="dots_trInsight"></div>
+                <button type="button" onclick="stepStat('trInsight', 1, 1, 5)">+</button>
+              </div>
+              <input type="hidden" id="trInsight" value="1">
+            </div>
+          </div>
+
+          <!-- Social Attributes -->
+          <h3 class="creator-subheading">Attributi Sociali (Partono da 1)</h3>
+          <div class="attributes-stepper-grid">
+            <div class="stat-stepper-card">
+              <div class="stepper-header"><span>Grinta (Tough)</span><span class="stepper-val" id="val_trTough">1</span></div>
+              <div class="stepper-controls">
+                <button type="button" onclick="stepStat('trTough', -1, 1, 5)">-</button>
+                <div class="dot-track" id="dots_trTough"></div>
+                <button type="button" onclick="stepStat('trTough', 1, 1, 5)">+</button>
+              </div>
+              <input type="hidden" id="trTough" value="1">
+            </div>
+
+            <div class="stat-stepper-card">
+              <div class="stepper-header"><span>Bellezza (Beauty)</span><span class="stepper-val" id="val_trBeauty">1</span></div>
+              <div class="stepper-controls">
+                <button type="button" onclick="stepStat('trBeauty', -1, 1, 5)">-</button>
+                <div class="dot-track" id="dots_trBeauty"></div>
+                <button type="button" onclick="stepStat('trBeauty', 1, 1, 5)">+</button>
+              </div>
+              <input type="hidden" id="trBeauty" value="1">
+            </div>
+
+            <div class="stat-stepper-card">
+              <div class="stepper-header"><span>Classe (Cool)</span><span class="stepper-val" id="val_trCool">1</span></div>
+              <div class="stepper-controls">
+                <button type="button" onclick="stepStat('trCool', -1, 1, 5)">-</button>
+                <div class="dot-track" id="dots_trCool"></div>
+                <button type="button" onclick="stepStat('trCool', 1, 1, 5)">+</button>
+              </div>
+              <input type="hidden" id="trCool" value="1">
+            </div>
+
+            <div class="stat-stepper-card">
+              <div class="stepper-header"><span>Grazia (Cute)</span><span class="stepper-val" id="val_trCute">1</span></div>
+              <div class="stepper-controls">
+                <button type="button" onclick="stepStat('trCute', -1, 1, 5)">-</button>
+                <div class="dot-track" id="dots_trCute"></div>
+                <button type="button" onclick="stepStat('trCute', 1, 1, 5)">+</button>
+              </div>
+              <input type="hidden" id="trCute" value="1">
+            </div>
+
+            <div class="stat-stepper-card">
+              <div class="stepper-header"><span>Astuzia (Clever)</span><span class="stepper-val" id="val_trClever">1</span></div>
+              <div class="stepper-controls">
+                <button type="button" onclick="stepStat('trClever', -1, 1, 5)">-</button>
+                <div class="dot-track" id="dots_trClever"></div>
+                <button type="button" onclick="stepStat('trClever', 1, 1, 5)">+</button>
+              </div>
+              <input type="hidden" id="trClever" value="1">
+            </div>
+          </div>
+
+          <!-- Trainer Skills (Abilità Umane) -->
+          <h3 class="creator-subheading">Competenze / Abilità Umane (Skills di Pokérole)</h3>
+          <div class="skills-categorized-grid" id="trainerSkillsInputs"></div>
+
+          <!-- Equipment & Notes -->
+          <div class="form-grid" style="margin-top: 1.5rem;">
+            <div class="form-field full-width">
+              <label for="trInventory">Equipaggiamento / Zaino</label>
+              <input type="text" id="trInventory" value="5x Poké Ball, 2x Pozione, Pokédex, Zaino da Viaggio">
+            </div>
+            <div class="form-field full-width">
+              <label for="trNotes">Note / Background Narrativo</label>
+              <textarea id="trNotes" rows="3" placeholder="Storia del personaggio, sogni, rivali..."></textarea>
+            </div>
+          </div>
+
+          <div class="modal-form-actions">
+            <button type="button" class="secondary-btn" onclick="closeTrainerModal()">Annulla</button>
+            <button type="submit" class="primary-btn">Salva Personaggio</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- CUSTOM POKÉMON CREATE / EDIT MODAL -->
+  <div class="modal-overlay" id="customPokeModal" onclick="closeCustomPokeModal(event)">
+    <div class="modal-card creator-modal-card" onclick="event.stopPropagation()">
+      <div class="mobile-sheet-handle"></div>
+      <button class="modal-close" onclick="closeCustomPokeModal()">✕</button>
+      <div class="modal-body">
+        <h2 id="customPokeModalTitle" style="margin-bottom: 0.2rem;">Crea Pokémon Personalizzato</h2>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">
+          Seleziona la Specie, assegna gli Attributi, l'Abilità e le Mosse di combattimento (Pokérole 3.0)
+        </p>
+
+        <form id="customPokeForm" onsubmit="saveCustomPokemon(event)">
+          <input type="hidden" id="cpId" value="">
+          <input type="hidden" id="cpImage" value="">
+          <input type="hidden" id="cpBaseHp" value="4">
+
+          <!-- Species Selection Bar with Sprite Preview -->
+          <div class="species-select-banner">
+            <div class="species-preview-sprite">
+              <img id="cpSpritePreview" src="Storage/images/BookSprites/bulbasaur.png" alt="Preview">
+            </div>
+            <div class="species-picker-box">
+              <label for="cpSpeciesSearch"><strong>1. Scegli la Specie Pokémon *</strong></label>
+              <div style="display:flex; gap:0.5rem;">
+                <input type="text" id="cpSpeciesSearch" list="speciesDatalist" placeholder="Digita per cercare tra 1200 Pokémon..." onchange="onSpeciesSelected(this.value)">
+                <datalist id="speciesDatalist"></datalist>
+              </div>
+              <div class="species-traits-line" id="cpSpeciesTraits">
+                Caricamento specie...
+              </div>
+            </div>
+          </div>
+
+          <!-- Nickname, Gender, Nature, Rank, Trainer Assignment -->
+          <div class="form-grid">
+            <div class="form-field">
+              <label for="cpNickname">Soprannome</label>
+              <input type="text" id="cpNickname" placeholder="Lascia vuoto per nome specie">
+            </div>
+
+            <div class="form-field">
+              <label for="cpGender">Genere</label>
+              <select id="cpGender">
+                <option value="M">Maschio (♂)</option>
+                <option value="F">Femmina (♀)</option>
+                <option value="Genderless">Senza Genere (⚲)</option>
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label for="cpNature">Natura</label>
+              <select id="cpNature"></select>
+            </div>
+
+            <div class="form-field">
+              <label for="cpRank">Rango</label>
+              <select id="cpRank" onchange="updateCustomPokeCalculations()">
+                <option value="Principiante">Principiante (Starter)</option>
+                <option value="Novizio">Novizio (Rookie)</option>
+                <option value="Standard">Standard</option>
+                <option value="Avanzato">Avanzato (Advanced)</option>
+                <option value="Esperto">Esperto (Expert)</option>
+                <option value="Asso">Asso (Ace)</option>
+                <option value="Maestro">Maestro (Master)</option>
+                <option value="Campione">Campione (Champion)</option>
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label for="cpTrainer">Assegna ad Allenatore</label>
+              <select id="cpTrainer">
+                <option value="">-- Nessun Allenatore (Libero / Selvatico) --</option>
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label for="cpItem">Strumento Tenuto</label>
+              <input type="text" id="cpItem" placeholder="Es. Bacca, Avanzi, Mirino...">
+            </div>
+          </div>
+
+          <!-- Dynamic HP Banner -->
+          <div class="hp-rank-banner" style="margin: 1.5rem 0;">
+            <div class="hp-calculation">
+              <div>
+                <span style="font-size:0.75rem; text-transform:uppercase; color:var(--text-dim);">Punti Vita Calcolati</span>
+                <span class="hp-number" id="cpCalculatedHp">5</span>
+              </div>
+              <div style="font-size:0.8rem; color:var(--text-muted);">
+                <span>Formula: HP Base (<strong id="cpBaseHpDisplay">4</strong>) + Vitalità (<strong id="cpVitDisplay">1</strong>) × Rango (<strong id="cpRankMultDisplay">1</strong>)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 5 Attributes Stepper -->
+          <h3 class="creator-subheading">2. Distribuzione Statistiche (Entro i Limiti della Specie)</h3>
+          <div class="attributes-stepper-grid">
+            <div class="stat-stepper-card">
+              <div class="stepper-header">
+                <strong>Forza (Strength)</strong>
+                <span class="stepper-val" id="val_cpStrength">1 / 5</span>
+              </div>
+              <div class="stepper-controls">
+                <button type="button" onclick="stepPokeStat('cpStrength', -1)">-</button>
+                <div class="dot-track" id="dots_cpStrength"></div>
+                <button type="button" onclick="stepPokeStat('cpStrength', 1)">+</button>
+              </div>
+              <input type="hidden" id="cpStrength" value="1">
+              <input type="hidden" id="cpMaxStrength" value="5">
+            </div>
+
+            <div class="stat-stepper-card">
+              <div class="stepper-header">
+                <strong>Destrezza (Dexterity)</strong>
+                <span class="stepper-val" id="val_cpDexterity">1 / 5</span>
+              </div>
+              <div class="stepper-controls">
+                <button type="button" onclick="stepPokeStat('cpDexterity', -1)">-</button>
+                <div class="dot-track" id="dots_cpDexterity"></div>
+                <button type="button" onclick="stepPokeStat('cpDexterity', 1)">+</button>
+              </div>
+              <input type="hidden" id="cpDexterity" value="1">
+              <input type="hidden" id="cpMaxDexterity" value="5">
+            </div>
+
+            <div class="stat-stepper-card">
+              <div class="stepper-header">
+                <strong>Vitalità (Vitality)</strong>
+                <span class="stepper-val" id="val_cpVitality">1 / 5</span>
+              </div>
+              <div class="stepper-controls">
+                <button type="button" onclick="stepPokeStat('cpVitality', -1)">-</button>
+                <div class="dot-track" id="dots_cpVitality"></div>
+                <button type="button" onclick="stepPokeStat('cpVitality', 1)">+</button>
+              </div>
+              <input type="hidden" id="cpVitality" value="1">
+              <input type="hidden" id="cpMaxVitality" value="5">
+            </div>
+
+            <div class="stat-stepper-card">
+              <div class="stepper-header">
+                <strong>Speciale (Special)</strong>
+                <span class="stepper-val" id="val_cpSpecial">1 / 5</span>
+              </div>
+              <div class="stepper-controls">
+                <button type="button" onclick="stepPokeStat('cpSpecial', -1)">-</button>
+                <div class="dot-track" id="dots_cpSpecial"></div>
+                <button type="button" onclick="stepPokeStat('cpSpecial', 1)">+</button>
+              </div>
+              <input type="hidden" id="cpSpecial" value="1">
+              <input type="hidden" id="cpMaxSpecial" value="5">
+            </div>
+
+            <div class="stat-stepper-card">
+              <div class="stepper-header">
+                <strong>Intuito (Insight)</strong>
+                <span class="stepper-val" id="val_cpInsight">1 / 5</span>
+              </div>
+              <div class="stepper-controls">
+                <button type="button" onclick="stepPokeStat('cpInsight', -1)">-</button>
+                <div class="dot-track" id="dots_cpInsight"></div>
+                <button type="button" onclick="stepPokeStat('cpInsight', 1)">+</button>
+              </div>
+              <input type="hidden" id="cpInsight" value="1">
+              <input type="hidden" id="cpMaxInsight" value="5">
+            </div>
+          </div>
+
+          <!-- Ability Selection -->
+          <h3 class="creator-subheading">3. Abilità Pokémon</h3>
+          <div class="form-field full-width">
+            <label for="cpAbilitySelect">Scegli Abilità (Naturale della Specie o da tutto il database):</label>
+            <select id="cpAbilitySelect" onchange="onAbilitySelectChanged(this.value)"></select>
+            <div id="cpAbilityEffectText" class="ability-effect-preview">Effetto abilità...</div>
+            <input type="hidden" id="cpAbilityName" value="">
+            <input type="hidden" id="cpAbilityEffect" value="">
+          </div>
+
+          <!-- Moves Selection -->
+          <h3 class="creator-subheading">4. Mosse di Combattimento (Max 6 Mosse)</h3>
+          <div class="equipped-moves-box">
+            <div class="equipped-moves-list" id="cpEquippedMovesList">
+              <div class="empty-state">Nessuna mossa ancora equipaggiata.</div>
+            </div>
+
+            <div class="add-move-bar">
+              <div class="select-move-wrap">
+                <label>Aggiungi dal Learnset della specie:</label>
+                <select id="cpLearnsetSelect" onchange="addMoveFromSelect('cpLearnsetSelect')">
+                  <option value="">-- Seleziona mossa appresa --</option>
+                </select>
+              </div>
+
+              <div class="select-move-wrap">
+                <label>Oppure cerca tra tutte le 892 mosse:</label>
+                <select id="cpAllMovesSelect" onchange="addMoveFromSelect('cpAllMovesSelect')">
+                  <option value="">-- Cerca qualsiasi mossa --</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-field full-width" style="margin-top: 1rem;">
+            <label for="cpNotes">Note / Personalità del Pokémon</label>
+            <textarea id="cpNotes" rows="2" placeholder="Carattere, preferenze, legame con l'allenatore..."></textarea>
+          </div>
+
+          <div class="modal-form-actions">
+            <button type="button" class="secondary-btn" onclick="closeCustomPokeModal()">Annulla</button>
+            <button type="submit" class="primary-btn">Salva Pokémon</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRAINER SHEET VIEW MODAL -->
+  <div class="modal-overlay" id="trainerSheetModal" onclick="closeTrainerSheetModal(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+      <div class="mobile-sheet-handle"></div>
+      <button class="modal-close" onclick="closeTrainerSheetModal()">✕</button>
+      <div class="modal-body" id="trainerSheetContent"></div>
+    </div>
+  </div>
+
+  <footer class="app-footer">
+    <div class="footer-container">
+      <p>PokéroleDex 3.0 Companion | Edizione Android Tradotta in Italiano</p>
+      <p class="copyright">Pokérole Project è un gioco di ruolo non ufficiale. Pokémon è copyright di Nintendo, Game Freak e Creatures Inc.</p>
+    </div>
+  </footer>
+
+  <script src="Back-End/static/js/pokeroledex_data.js"></script>
+  <script src="Back-End/static/js/app.js"></script>
+</body>
+</html>

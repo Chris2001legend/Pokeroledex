@@ -1,0 +1,26 @@
+{
+  "name": "PokéroleDex 3.0 - TTRPG Companion",
+  "short_name": "PokéroleDex",
+  "description": "Pokédex e compagno GDR per Pokérole TRPG 3.0 - Edizione Android in Italiano",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0f172a",
+  "theme_color": "#e53e3e",
+  "lang": "it-IT",
+  "icons": [
+    {
+      "src": "/static/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
